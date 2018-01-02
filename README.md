@@ -1,2 +1,2 @@
 # FranzisSkill
-Die Javascript Sourcen zu Franziska Alexa Skill.
+Die Javascript Sourcen zu Franziskas Alexa Skill.

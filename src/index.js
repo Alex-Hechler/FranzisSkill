@@ -71,7 +71,7 @@ FranzisSkill.prototype.actionHandlers = {
 
 // Create the handler that responds to the Alexa Request.
 exports.handler = function(event, context) {
-	logObject("EVENT", event);
+	logVariable("EVENT", event);
 	
 	speech.set_locale(getEventLocale(event)); 
 	
@@ -167,395 +167,10 @@ function execDoRollback(session, response) {
 }
 
 
-
-
-function execIntro(session, response) {
-	// TODO: set phase to INTRO
-//	setUserPhase(session, "INTRO");
-	askQuestion(session, response, "INTRO.1");
-}
-
-function execWelcome(session, response) {
-	askQuestion(session, response, "WELCOME");
-}
-
-function askQuestion(session, response, MSG_KEY, prefixMsg) {
-	var msg = speech.createMsg("TEXT", MSG_KEY);
-	addPrefixMsg(msg, prefixMsg);
-	setSessionQuestion(session, MSG_KEY);
-	respondText(session, response, msg, "TOK_" + MSG_KEY, true);
-}
-
-
-function addPrefixMsg(baseMsg, prefixMsg) {
-	if (!prefixMsg) {
-		return;
-	}
-	if (prefixMsg.speechOut && baseMsg.speechOut) {
-		baseMsg.speechOut = prefixMsg.speechOut + " " + baseMsg.speechOut;
-	}
-	if (prefixMsg.display && baseMsg.display) {
-		baseMsg.display = prefixMsg.display + " " + baseMsg.display;
-	}
-}
-
-
-function showAction(session, response, ACTION_KEY) {
-	var msg = speech.createMsg("TEXT", ACTION_KEY);
-	respondText(session, response, msg, "ACT_"+ACTION_KEY, false);
-}
-
-
-function execDisplayField(session, response, msg) {
-	var gameId = getSessionGameId(session);
-	send(session, response, gameId, "getGameData", "", "",
-			function callbackFunc(result) {
-				setSessionGameMovesCount(session, result.movesCount);
-				respondField(session, response, result, msg);
-			});
-}
-
-function execChangeAILevel(intent, session, response) {
-	var aiLevel = getAILevel(intent);
-	send(session, response, getSessionGameId(session), "setAILevel", aiLevel, "", function successFunc(result) {
-		setUserAILevel(session, aiLevel);
-		var prefixMsg = speech.createMsg("INTERN", "AI_LEVEL_CHANGED", aiLevel);
-		var prefixMsg2 = speech.createMsg("INTERN", "MAKE_YOUR_MOVE");
-		addPrefixMsg(prefixMsg, prefixMsg2);
-		execDisplayField(session, response, prefixMsg);
-	});
-}
-
-function execSetOptShow(intent, session, response, optShow) {
-	setUserOptShow(session, optShow);
-	var msg_code = (optShow) ? "OPT_SHOW_ACTIVATED" : "OPT_SHOW_DEACTIVATED";
-	var prefixMsg = speech.createMsg("INTERN", msg_code, optShow);
-	var prefixMsg2 = speech.createMsg("INTERN", "MAKE_YOUR_MOVE");
-	addPrefixMsg(prefixMsg, prefixMsg2);
-	execDisplayField(session, response, prefixMsg);
-}
-
-function execAnimalConnect(intent, session, response) {
-	var animal = getMappedAnimal(intent);
-	send(session, response, getSessionGameId(session), "connectImage", animal, "", function successFunc(result) {
-		msg = speech.createMsg("INTERN", "ANIMAL_CONNECTED", animal);
-		execDisplayField(session, response, msg);
-	});
-}
-
-function didNotUnterstand(intent, session, response) {
-	msg = speech.createMsg("INTERN", "DID_NOT_UNDERSTAND");
-	execDisplayField(session, response, msg)
-}
-
-function changeSettings(intent, session, response) {
-	msg = speech.createMsg("INTERN", "CHANGE_SETTINGS");
-	execDisplayField(session, response, msg)
-}
-
-function closeGame(session, response, successCallback) {
-	send(session, response, getSessionGameId(session), "closeGame", "", "", function callbackFunc(result) {
-		successCallback();
-	});
-}
-
-
-/* ============ */
-/* TEXT DISPLAY */
-/* ============ */
-
-function respondText(session, response, msg, token, instantAnswer) {
-	var directives = createTextDirective(session, msg, token);
-	if (instantAnswer) {
-		respondMsgWithDirectives(session, response, msg, directives);
-	}
-	else {
-		outputMsgWithDirectives(session, response, msg, directives);
-	}
-}
-
-function createTextDirective(session, msg, token) {
-	if (!getRequestHasDisplay(session)) {
-		return undefined;
-	}
-	var directives = [ {
-		"type" : "Display.RenderTemplate",
-		"template" : {
-			"type" : "BodyTemplate3",
-			"token" : token,
-			"title" : msg.title,
-			"image": {
-				"sources": [ { "url": "https://calcbox.de/chsimgs/help/chess_help-340.png" } ]
-			},
-			"textContent" : {
-				"primaryText" : {
-					"type" : "RichText",
-					"text" : msg.richText
-				}
-			},
-			"backButton" : "VISIBLE",
-		}
-	} ];
-	return directives;
-}
-
-/* ============= */
-/* FIELD DISPLAY */
-/* ============= */
-
-function respondField(session, response, gameData, msg) {
-	var lastAIMove = getSessionLastAIMove(session);
-	var lastAIMoveCheck = getSessionLastAIMoveCheck(session);
-	removeSessionLastAIMove(session);
-	removeSessionLastAIMoveCheck(session);
-	if (!msg) {
-		msg = createStatusMsg(gameData.winner, lastAIMove, lastAIMoveCheck);
-	}
-	var gameStatusInfo = createGameStatusInfo(gameData);
-	var directives = createFieldDirectives(session, gameData, msg, lastAIMove, lastAIMoveCheck, gameStatusInfo);
-	if (gameData.winner != 0) {
-		closeGame(session, response, function closedCallback() {
-			outputMsgWithDirectives(session, response, msg, directives);
-		});
-	} else {
-		var instantAnswer = getUserInstantAnswer(session, true);
-		if (instantAnswer) {
-			respondMsgWithDirectives(session, response, msg, directives);
-		} else {
-			outputMsgWithDirectives(session, response, msg, directives);
-		}
-	}
-}
-
-function createFieldDirectives(session, gameData, msg, lastAIMove, lastAIMoveCheck, gameStatusInfo) {
-	if (!getRequestHasDisplay(session)) {
-		logObject("createFieldDirectives-session", session)
-		return undefined;
-	}
-	var optShow = getUserOptShow(session);
-	var hintMsg = createHintMsg(gameData.winner, lastAIMove);
-	var fieldText = createFieldText(gameData.fieldView.fen, gameData.fieldView.lastMove, optShow);
-	var directives = [ {
-		"type" : "Display.RenderTemplate",
-		"template" : {
-			"type" : "BodyTemplate1",
-			"token" : "TOK_MAIN",
-			"title" : gameStatusInfo + msg.display,
-			"textContent" : {
-				"primaryText" : {
-					"type" : "RichText",
-					"text" : fieldText
-				}
-			},
-			"backButton" : "HIDDEN",
-			"hint" : {
-				"type" : "PlainText",
-				"text" : hintMsg.display
-			}
-		}
-	} ];
-	return directives;
-}
-
-function outputMsgWithDirectives(session, response, msg, directives) {
-	saveUserData(session, response, function successCallback() {
-		removeSessionRequest(session);
-		speech.outputMsgWithDirectives(response, msg, directives)
-	});
-}
-
-function respondMsgWithDirectives(session, response, msg, directives) {
-	saveUserData(session, response, function successCallback() {
-		removeSessionRequest(session);
-		speech.respondMsgWithDirectives(response, msg, directives);
-	});
-}
-
-function createGameStatusInfo(gameData) {
-	if (!gameData) {
-		return "";
-	}
-	return "[Zug:"+(gameData.movesCount+1)+"/AI:"+gameData.aiLevel+"] - ";
-}
-
-function createStatusMsg(winner, lastAIMove, lastAIMoveCheck) {
-	var msg;
-	var status = !lastAIMove ? "STATUS" : "STATUS_AIMOVE";
-	var lastMoveText = move2text(lastAIMove, lastAIMoveCheck);
-	if ((winner === 1) || (winner === 2)) {
-		if (!lastAIMove) {
-			msg = speech.createMsg(status, "PLAYER_WINS", lastMoveText);
-		}
-		else {
-			msg = speech.createMsg(status, "AI_PLAYER_WINS", lastMoveText);
-		}
-	} else if (winner === -1) {
-		msg = speech.createMsg(status, "DRAW", lastMoveText);
-	} else {
-		msg = speech.createMsg(status, "MAKE_YOUR_MOVE", lastMoveText);
-	}
-	return msg;
-}
-
-function move2text(lastMove, lastMoveCheck) {
-	if (!lastMove) {
-		return undefined;
-	}
-	var result = lastMove.charAt(0) + " " + lastMove.charAt(1) + " nach " + lastMove.charAt(2) + " " + lastMove.charAt(3);
-	if (lastMoveCheck) {
-		result = result + " (SCHACH)"
-	}
-	return result;
-}
-	
-
-
-function createHintMsg(winner, lastAIMove) {
-	var msg;
-	if ((winner === 1) || (winner === 2)) {
-		if (!lastAIMove) {
-			msg = speech.createMsg("HINT", "PLAYER_WINS");
-		} else {
-			msg = speech.createMsg("HINT", "AI_PLAYER_WINS");
-		}
-	} else if (winner === -1) {
-		msg = speech.createMsg("HINT", "DRAW");
-	} else {
-		msg = speech.createMsg("HINT", "MAKE_YOUR_MOVE");
-	}
-	return msg;
-}
-
-function createFieldText(fieldStr, lastMove, optShow) {
-	var result = "";
-	var numericMove = move2numeric(lastMove);
-	result = result + "<font size='3'><action token='ActionHELP'>(?)</action></font><font size='2'>";
-	result = result + addImageWH("spacer_h", spacerHWidth, spacerHHeight);
-	result = result + addImageWH("header", headerWidth, headerHeight);
-
-	if (optShow) {
-		result = result + addImageWH("spacer_h", spacerHWidth, spacerHHeight); // use this as linebreak to avoid a gap between lines. Does not work on simulator (no 1024px width?)
-	}
-	else {
-		result = result + "<br/>";                   // this is the normal linebreak, but puts some extra pixels between the lines. 
-	}
-	
-	for (var row = 7; row >= 0; row--) {
-		var y = 7-row;
-		result = result + addImage("space_5", 5);
-		result = result + addImageWH("left_"+(row+1), leftWidth, imgBaseSize);
-		for (var col = 0; col < 8; col++) {
-			var code = fieldStr.charAt(y*9+col);
-			var img = code2Img(code, col, row, numericMove);
-			result = result + addImage(img, 1);
-		}
-		if (optShow) {
-			result = result + addImage("space_4", 4);  // use this as linebreak to avoid a gap between lines. Does not work on simulator (no 1024px width?)
-		}
-		else {
-			result = result + "<br/>";                 // this is the normal linebreak, but puts some extra pixels between the lines. 
-		}
-	}
-
-	
-	result = result + addImageWH("spacer_f", spacerFWidth, spacerFHeight);
-	result = result + addImageWH("footer", footerWidth, footerHeight);
-	result = result + "</font>";
-	return result;
-}
-
-function move2numeric(move) {
-	if (move === undefined) {
-		return undefined;
-	}
-	colFrom = move.charCodeAt(0) - "a".charCodeAt(0); 
-	rowFrom = move.charCodeAt(1) - "1".charCodeAt(0);
-	colTo = move.charCodeAt(2) - "a".charCodeAt(0); 
-	rowTo = move.charCodeAt(3) - "1".charCodeAt(0);
-	return {
-		"colFrom": colFrom,
-		"rowFrom": rowFrom,
-		"colTo": colTo,
-		"rowTo": rowTo
-	}
-}
-
-function code2Img(code, col, row, numericMove) {
-	var img;
-	if (code == '1') {
-		img = "00";
-	} 
-	else {
-		var lowerCase = code.toLowerCase();
-		if (lowerCase === code) {
-			img = "b"+lowerCase;  
-		}
-		else {
-			img = "w"+lowerCase;  
-		}
-	}
-	var odd = ((col+row) % 2 === 1);
-	if (odd) {
-		img = img + "l";
-	}
-	else {
-		img = img + "d";
-	}
-	if (numericMove !== undefined) {
-		if ((col === numericMove.colFrom) && (row === numericMove.rowFrom)) {
-			img = img + "m"
-		}
-		else if ((col === numericMove.colTo) && (row === numericMove.rowTo)) {
-			img = img + "m"
-		}
-	}
-	return img;
-}
-
-function addImage(imgName, size) {
-	return addImageWH(imgName, size * imgBaseSize, imgBaseSize);
-}
-
-function addImageWH(imgName, width, height) {
-	return "<img src='" + imgBaseUrl + imgName + ".png' width='" + width + "' height='" + height + "'/>";
-}
-
 /* ============= */
 /* INTENT-ACCESS */
 /* ============= */
 
-function getMove(intent) {
-	var from_col = getFromIntent(intent, "from_col", "?");
-	var from_row = getFromIntent(intent, "from_row", 0);
-	var to_col = getFromIntent(intent, "to_col", "?");
-	var to_row = getFromIntent(intent, "to_row", 0);
-	return from_col + "-" + from_row + ":" + to_col + "-" + to_row;
-}
-
-function getMoveText(intent) {
-	var from_col = getFromIntent(intent, "from_col", "?");
-	var from_row = getFromIntent(intent, "from_row", "?");
-	var to_col = getFromIntent(intent, "to_col", "?");
-	var to_row = getFromIntent(intent, "to_row", "?");
-	return from_col + " " + from_row + " nach " + to_col + " " + to_row;
-}
-
-function getAILevel(intent) {
-	return getFromIntent(intent, "aiLevel", "?");
-}
-
-function getMappedAnimal(intent) {
-	var animal = getFromIntent(intent, "animal", "?");
-	if (animal === undefined) {
-		return '?';
-	}
-	animal = animal.toLowerCase();
-	var mappedAnimal = ANIMAL_MAPPING[animal];
-	if (mappedAnimal !== undefined) {
-		return mappedAnimal;
-	}
-	return animal.toUpperCase();
-}
 
 function getFromIntent(intent, attribute_name, defaultValue) {
 	var result = intent.slots[attribute_name];
@@ -569,10 +184,6 @@ function getFromIntent(intent, attribute_name, defaultValue) {
 /* SESSION VARIABLES ACCESS */
 /* ======================== */
 
-function isConnectedToGame(session) {
-	return getSessionGameId(session) !== undefined;
-}
-
 function getAmzUserId(session) {
 	if (!session || (!session.user)) {
 		return undefined;
@@ -585,56 +196,14 @@ function clearSessionData(session) {
 	session.attributes = {};
 }
 
-function getSessionGameId(session, defaultValue) {
-	return getFromSession(session, "gameId", defaultValue);
-}
-function getSessionGameMovesCount(session, defaultValue) {
-	return getFromSession(session, "gameMovesCount", defaultValue);
-}
-function getSessionLastAIMove(session, defaultValue) {
-	return getFromSession(session, "lastAIMove", defaultValue);
-}
-function getSessionLastAIMoveCheck(session, defaultValue) {
-	return getFromSession(session, "lastAIMoveCheck", defaultValue);
-}
 function getSessionQuestion(session, defaultValue) {
 	return getFromSession(session, "question", defaultValue);
 }
-function getRequestDisplayToken(session, defaultValue) {
-	return getFromSessionRequest(session, "displayToken", defaultValue);
-}
-function getRequestHasDisplay(session, defaultValue) {
-	return getFromSessionRequest(session, "hasDisplay", defaultValue);
-}
 
-function setSessionGameId(session, gameId) {
-	setInSession(session, "gameId", gameId);
-}
-function setSessionGameMovesCount(session, gameMovesCount) {
-	setInSession(session, "gameMovesCount", gameMovesCount);
-}
-function setSessionLastAIMove(session, lastAIMove) {
-	setInSession(session, "lastAIMove", lastAIMove);
-}
-function setSessionLastAIMoveCheck(session, lastAIMoveCheck) {
-	setInSession(session, "lastAIMoveCheck", lastAIMoveCheck);
-}
 function setSessionQuestion(session, questionKey) {
 	setInSession(session, "question", questionKey);
 }
-function setRequestDisplayToken(session, displayToken) {
-	setInSessionRequest(session, "displayToken", displayToken);
-}
-function setRequestHasDisplay(session, hasDisplay) {
-	setInSessionRequest(session, "hasDisplay", hasDisplay);
-}
 
-function removeSessionLastAIMove(session) {
-	removeFromSession(session, "lastAIMove");
-}
-function removeSessionLastAIMoveCheck(session) {
-	removeFromSession(session, "lastAIMoveCheck");
-}
 function removeSessionQuestion(session) {
 	removeFromSession(session, "question");
 }
@@ -986,15 +555,15 @@ function doLaunch(session, response) {
 
 function doSagHalloIntent(intent, session, response) {
 	initUser(intent, session, response, function successFunc() {
-		executeSagHalloIntent(intent, session, response);
+		executeSagHalloIntent(session, response);
 	});
 }
 
 function doAddiereZahlenIntent(intent, session, response) {
 	initUser(intent, session, response, function successFunc() {
-		var zahl1 = getFromIntent(intent, "zahl1");
-		var zahl2 = getFromIntent(intent, "zahl2");
-		executeAddiereZahlenIntent(intent, session, response, zahl1, zahl2);
+		var zahl1 = getFromIntent(intent, "zahlA");
+		var zahl2 = getFromIntent(intent, "zahlB");
+		executeAddiereZahlenIntent(session, response, zahl1, zahl2);
 	});
 }
 
@@ -1004,31 +573,44 @@ function doAddiereZahlenIntent(intent, session, response) {
 /* =============== */
 
 
+function ask(session, response, text) {
+	saveUserData(session, response, function successCallback() {
+		removeSessionRequest(session);
+		speech.ask(response, text);
+	});
+}
+
+function tell(session, response, text) {
+	saveUserData(session, response, function successCallback() {
+		removeSessionRequest(session);
+		speech.tell(response, text)
+	});
+}
+
 function logVariable(prefix, variable) {
 	console.log(prefix + ": " + JSON.stringify(variable));
 }
-
 
 /* ================== */
 /* EXECUTE FUNKTIONEN */
 /* ================== */
 
 function executeFirstTimeLaunch(session, response) {
-	speech.ask("Willkommen zum ersten Mal. Hier ist eine Einführung. Fertig. Was möchtest Du jetzt tun?");
+	ask(session, response, "Willkommen zum ersten Mal. Hier ist eine Einführung. Fertig. Was möchtest Du jetzt tun?");
 }
 
 function executeLaunch(session, response) {
-	speech.ask("Willkommen zurück, Was möchtest Du jetzt tun?");
+	ask(session, response, "Willkommen zurück, Was möchtest Du jetzt tun?");
 }
 
 function executeSagHalloIntent(session, response) {
-	speech.tell("Halli, Hallo!");
+	tell(session, response, "Halli, Hallo!");
 }
 
-function executeAddiereZahlenIntent(session, response, zahl1, zahl2) {
-	logVariable("Zahl 1", zahl1);
-	logVariable("Zahl 2", zahl2);
-	speech.tell("Das weiss ich doch nicht!");
+function executeAddiereZahlenIntent(session, response, zahlA, zahlB) {
+	logVariable("Zahl A", zahlA);
+	logVariable("Zahl B", zahlB);
+	tell(session, response, "Das weiss ich doch nicht!");
 }
 
 

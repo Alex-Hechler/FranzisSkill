@@ -9,24 +9,16 @@
       "intent": "AddiereZahlenIntent",
       "slots": [
         {
-          "name": "zahl1",
+          "name": "zahlA",
           "type": "AMAZON.NUMBER"
         },
         {
-          "name": "zahl2",
+          "name": "zahlB",
           "type": "AMAZON.NUMBER"
         }
       ]
     },
 
-	{
-	  "intent": "AMAZON.YesIntent"
-	},
-	{
-	  "intent": "AMAZON.NoIntent"
-	},
-    
-    
     {
       "intent": "AMAZON.StopIntent"
     }    

@@ -2,13 +2,10 @@ SagHalloIntent Sage Hallo
 SagHalloIntent Begrüß mich
 SagHalloIntent Sag Guten Tag
 
-AddiereZahlenIntent Addiere {zahl1} und {zahl2}   
-AddiereZahlenIntent Was ergibt {zahl1} plus {zahl2} 
-AddiereZahlenIntent Was ist {zahl1} plus {zahl2} 
-AddiereZahlenIntent Was ist die Summe aus {zahl1} und {zahl2} 
-
-AMAZON.YesIntent Ja
-AMAZON.NoIntent Nein
+AddiereZahlenIntent Addiere {zahlA} und {zahlB}   
+AddiereZahlenIntent Was ergibt {zahlA} plus {zahlB} 
+AddiereZahlenIntent Was ist {zahlA} plus {zahlB} 
+AddiereZahlenIntent Was ist die Summe aus {zahlA} und {zahlB} 
 
 AMAZON.StopIntent Stop
 AMAZON.StopIntent Abbrechen
