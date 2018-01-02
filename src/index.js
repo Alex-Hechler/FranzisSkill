@@ -95,82 +95,10 @@ exports.initTests = function(url, param, callback) {
 /* SEND METHODEN */
 /* ============= */
 
-function initUserAndConnect(intent, session, response, successCallback) {
-	initUser(session, response, function successFunc1() {
-		connect(session, response, function successFunc2() {
-			var handled = handleSessionQuestion(intent, session, response);
-			if (!handled) {
-				successCallback();
-			};
-		});
-	});
-}
-
-function connect(session, response, successCallback) {
-	if (isConnectedToGame(session)) {
-		successCallback();
-	} else {
-		var userId = getDBUserIdFromSession(session);
-		var userAILevel = getUserAILevel(session, 2);
-		send(session, response, "", "connect", userId, userAILevel,
-				function callbackFunc(result) {
-					console.log("Connected with GameId: " + result.gameId);
-					setSessionGameId(session, result.gameId);
-					setSessionGameMovesCount(session, result.movesCount);
-					successCallback();
-				});
-	}
-}
-
-function execDoNewGame(intent, session, response) {
-	var gameId = getSessionGameId(session);
-	sendCommand(session, gameId, "restartGame", "", "", function callbackFunc(result) {
-		clearSessionData(session);
-		initUserAndConnect(intent, session, response, function successCallback() {
-			msg = speech.createMsg("INTERN", "NEW_GAME_STARTED");
-			execDisplayField(session, response, msg);
-		});
-	});
-}
-
-function execDoMove(intent, session, response) {
-	send(session, response, getSessionGameId(session), "doMove", getMove(intent), "", 
-			function successFunc(result) {
-				if (result.code === "S_OK") {
-					execDoAIMove(session, response);
-				} else {
-					execDisplayField(session, response);
-				}
-			},
-			function errorFunc(result, code) {
-				var moveText = getMoveText(intent);
-				speech.respond("SEND_doMove", code, response, moveText);
-			}
-	);
-}
-
-function execDoAIMove(session, response) {
-	send(session, response, getSessionGameId(session), "doAIMove", "", "",
-			function successFunc(result) {
-				setSessionLastAIMove(session, result.move.move);
-				setSessionLastAIMoveCheck(session, result.move.check);
-				execDisplayField(session, response);
-			});
-}
-
-function execDoRollback(session, response) {
-	send(session, response, getSessionGameId(session), "rollback",
-			"2", "", function successFunc(result) {
-				msg = speech.createMsg("INTERN", "LAST_MOVE_ROLLEDBACK");
-				execDisplayField(session, response, msg);
-			});
-}
-
 
 /* ============= */
 /* INTENT-ACCESS */
 /* ============= */
-
 
 function getFromIntent(intent, attribute_name, defaultValue) {
 	var result = intent.slots[attribute_name];
@@ -274,7 +202,6 @@ function removeSessionRequest(session) {
 	}
 	delete session.request;
 }
-
 
 function hasEventDisplay(event) {
 	if (!event || (!event.context) || (!event.context.System) || (!event.context.System.device) 
