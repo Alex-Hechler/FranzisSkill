@@ -1,25 +1,10 @@
 /**
- * Diese Datei ist Teil des Alexa Skills 'Carballo Chess'. Copyright (C) 2016-2017
- * Ferenc Hechler (github@fh.anderemails.de)
- * 
- * Der Alexa Skill 'Carballo Chess' ist Freie Software: Sie koennen es unter den
- * Bedingungen der GNU General Public License, wie von der Free Software
- * Foundation, Version 3 der Lizenz oder (nach Ihrer Wahl) jeder spaeteren
- * veroeffentlichten Version, weiterverbreiten und/oder modifizieren.
- * 
- * Der Alexa Skills 'Carballo Chess' wird in der Hoffnung, dass es nuetzlich sein
- * wird, aber OHNE JEDE GEWAEHRLEISTUNG, bereitgestellt; sogar ohne die
- * implizite Gewaehrleistung der MARKTFAEHIGKEIT oder EIGNUNG FUER EINEN
- * BESTIMMTEN ZWECK. Siehe die GNU General Public License fuer weitere Details.
- * 
- * Sie sollten eine Kopie der GNU General Public License zusammen mit diesem
- * Programm erhalten haben. Wenn nicht, siehe <http://www.gnu.org/licenses/>.
+ * JavasScript Sourcen zu Franzis Skill.
  */
 
 /* App ID for the skill */
 var APP_ID = process.env.APP_ID; // "amzn1.ask.skill.46c8454a-d474-4e38-a75e-c6c8017b1fe1"; 
 
-var endpoint = process.env.ENDPOINT; // 'http://calcbox.de/devchess/rest/chess';
 var dbEndpoint = process.env.DBENDPOINT; // 'http://calcbox.de/simdb/rest/db';
 
 var URL = require('url');
@@ -33,236 +18,45 @@ var speech = require('./Speech');
 var http = require('http');
 var querystring = require("querystring");
 
-var imgBaseUrl = "https://calcbox.de/chsimgs/48px/";
-var imgBaseSize = 48;
-var headerWidth = 408;
-var headerHeight = 16; 
-var footerWidth = 408;
-var footerHeight = 17; 
-var spacerHWidth = 208;
-var spacerHHeight = 16;
-var spacerFWidth = 234;
-var spacerFHeight = 16;
-var leftWidth = 17;
-
-
-var QUESTION_TO_INTENTS_MAPPING = {
-		"INTRO.1" : ["AMAZON.YesIntent", "AMAZON.NoIntent"],
-		"INTRO.2" : ["NumberAnswerIntent"],
-		"INTRO.3" : ["AMAZON.YesIntent", "AMAZON.NoIntent"]
-}
-
-var TOKEN_TO_QUESTION_MAPPING = {
-		"TOK_HELP" : "HELP_REGELN",
-		"TOK_INTRO": "HELP_REGELN",
-		"TOK_WELCOME": "HELP_REGELN",
-		"TOK_HELP_REGELN": "HELP_REGELN",
-		"TOK_HELP_REGELN_NOGUI": "HELP_REGELN",
-
-		"ACT_ActionHELP": "ActionHOME",
-		"ACT_ActionHELP_REGELN": "ActionHOME",
-		"ACT_ActionHELP_SPRACHSTEUERUNG": "ActionHOME",
-		"ACT_ActionHELP_KOMMANDOS": "ActionHOME",
-		"ACT_ActionHELP_WEITERES": "ActionHOME",
-
-		"TOK_MAIN": undefined
-}
-
-var NEXT_MSG_KEY_FOR_YES = {
-		"HELP": "HELP_REGELN",
-		"INTRO": "HELP_REGELN",
-		"WELCOME": "HELP_REGELN",
-		"HELP_REGELN": "HELP_REGELN",
-		"HELP_REGELN_NOGUI": "HELP_REGELN"
-	}
-
-var ANIMAL_MAPPING = {
-
-		  // LOCAL de-DE
-		  "affe":			"AFFE",
-		  "affen":			"AFFE",
-		  "ameise":			"AMEISE",
-		  "bär":			"BAER",
-		  "bären":			"BAER",
-		  "biene": 			"BIENE",
-		  "dachs": 			"DACHS",
-		  "delfin": 		"DELFIN",
-		  "delphin": 		"DELFIN",
-		  "eichhörnchen":	"EICHHOERNCHEN",
-		  "elefant": 		"ELEFANT",
-		  "elefanten":		"ELEFANT",
-		  "ente": 			"ENTE",
-		  "esel": 			"ESEL",
-		  "fisch": 			"FISCH",
-		  "fliege": 		"FLIEGE",
-		  "frosch": 		"FROSCH",
-		  "gans": 			"GANS",
-		  "giraffe": 		"GIRAFFE",
-		  "hahn": 			"HAHN",
-		  "hai": 			"HAI",
-		  "hase": 			"HASE",
-		  "hasen": 			"HASE",
-		  "hirsch": 		"HIRSCH",
-		  "hund": 			"HUND",
-		  "igel": 			"IGEL",
-		  "kamel": 			"KAMEL",
-		  "katze": 			"KATZE",
-		  "krokodil": 		"KROKODIL",
-		  "kuh": 			"KUH",
-		  "löwe": 			"LOEWE",
-		  "löwen": 			"LOEWE",
-		  "marienkäfer": 	"MARIENKAEFER",
-		  "maus": 			"MAUS",
-		  "möwe": 			"MOEWE",
-		  "nashorn": 		"NASHORN",
-		  "panda": 			"PANDA",
-		  "papagei": 		"PAPAGEI",
-		  "pfau": 			"PFAU",
-		  "pferd":			"PFERD",
-		  "pinguin": 		"PINGUIN",
-		  "raupe": 			"RAUPE",
-		  "schaf": 			"SCHAF",
-		  "schildkröte": 	"SCHILDKROETE",
-		  "schlange": 		"SCHLANGE",
-		  "schmetterling": 	"SCHMETTERLING",
-		  "schnecke": 		"SCHNECKE",
-		  "schwan": 		"SCHWAN",
-		  "schwein": 		"SCHWEIN",
-		  "spinne": 		"SPINNE",
-		  "storch": 		"STORCH",
-		  "tiger": 			"TIGER",
-		  "wal": 			"WAL",
-		  "wolf": 			"WOLF",
-		  "wurm": 			"WURM",
-		  "zebra": 			"ZEBRA",
-		  
-		  // LOCALE en-US
-		  "monkey": 		"AFFE",
-		  "ant": 			"AMEISE",
-		  "bear": 			"BAER",
-		  "bee": 			"BIENE",
-		  "badger": 		"DACHS",
-		  "dolphin": 		"DELFIN",
-		  "squirrel": 		"EICHHOERNCHEN",
-		  "elephant": 		"ELEFANT",
-		  "duck": 			"ENTE",
-		  "donkey": 		"ESEL",
-		  "fish": 			"FISCH",
-		  "fly": 			"FLIEGE",
-		  "frog": 			"FROSCH",
-		  "goose": 			"GANS",
-		  "giraffe": 		"GIRAFFE",
-		  "cock": 			"HAHN",
-		  "shark": 			"HAI",
-		  "rabbit": 		"HASE",
-		  "deer": 			"HIRSCH",
-		  "dog": 			"HUND",
-		  "hedgehog": 		"IGEL",
-		  "camel": 			"KAMEL",
-		  "cat": 			"KATZE",
-		  "crocodile": 		"KROKODIL",
-		  "cow": 			"KUH",
-		  "lion": 			"LOEWE",
-		  "ladybug": 		"MARIENKAEFER",
-		  "mouse": 			"MAUS",
-		  "gull": 			"MOEWE",
-		  "rhino": 			"NASHORN",
-		  "panda": 			"PANDA",
-		  "parrot": 		"PAPAGEI",
-		  "peacock": 		"PFAU",
-		  "horse":			"PFERD",
-		  "penguin": 		"PINGUIN",
-		  "caterpillar": 	"RAUPE",
-		  "sheep": 			"SCHAF",
-		  "turtle": 		"SCHILDKROETE",
-		  "snake": 			"SCHLANGE",
-		  "butterfly": 		"SCHMETTERLING",
-		  "snail": 			"SCHNECKE",
-		  "swan": 			"SCHWAN",
-		  "pig": 			"SCHWEIN",
-		  "spider": 		"SPINNE",
-		  "stork": 			"STORCH",
-		  "tiger": 			"TIGER",
-		  "whale": 			"WAL",
-		  "wolf": 			"WOLF",
-		  "worm": 			"WURM",
-		  "zebra": 			"ZEBRA"
-		  
-}
-
-
 /**
- * ChessSkill is a child of AlexaSkill.
+ * FranzisSkill is a child of AlexaSkill.
  */
-var ChessSkill = function() {
+var FranzisSkill = function() {
 	AlexaSkill.call(this, APP_ID);
 };
 
 // Extend AlexaSkill
-ChessSkill.prototype = Object.create(AlexaSkill.prototype);
-ChessSkill.prototype.constructor = ChessSkill;
+FranzisSkill.prototype = Object.create(AlexaSkill.prototype);
+FranzisSkill.prototype.constructor = FranzisSkill;
 
-ChessSkill.prototype.eventHandlers.onSessionStarted = function(
+FranzisSkill.prototype.eventHandlers.onSessionStarted = function(
 		sessionStartedRequest, session) {
-	console.log("ChessSkill onSessionStarted requestId: "
+	console.log("FranzisSkill onSessionStarted requestId: "
 			+ sessionStartedRequest.requestId + ", sessionId: "
 			+ session.sessionId);
 	// any initialization logic goes here
 	clearSessionData(session);
 };
 
-ChessSkill.prototype.eventHandlers.onSessionEnded = function(
+FranzisSkill.prototype.eventHandlers.onSessionEnded = function(
 		sessionEndedRequest, session) {
-	console.log("ChessSkill onSessionEnded requestId: "
+	console.log("FranzisSkill onSessionEnded requestId: "
 			+ sessionEndedRequest.requestId + ", sessionId: "
 			+ session.sessionId);
 	// any cleanup logic goes here
 	clearSessionData(session);
 };
 
-ChessSkill.prototype.eventHandlers.onLaunch = function(launchRequest, session, response) {
+FranzisSkill.prototype.eventHandlers.onLaunch = function(launchRequest, session, response) {
 	doLaunch(session, response);
 };
 
-ChessSkill.prototype.intentHandlers = {
 
-	"NewGameIntent" : doNewGameIntent,
+FranzisSkill.prototype.intentHandlers = {
 
-	"PlayerMoveIntent" : doPlayerMoveIntent,
+	"SagHalloIntent" : doSagHalloIntent,
+	"AddiereZahlenIntent" : doAddiereZahlenIntent,
     
-	"AIStartsIntent" : doAIStartsIntent,
-	
-	"RollbackIntent" : doRollbackIntent,
-
-	"ActivateShowDisplayIntent" : doActivateShowDisplayIntent,
-	"DeactivateShowDisplayIntent" : doDeactivateShowDisplayIntent,
-
-	"ChangeAILevelIntent" : doChangeAILevelIntent,
-	
-	"AnimalConnectIntent" : doAnimalConnectIntent, 
-		
-	"ActivateInstantAnswerIntent" : doActivateInstantAnswerIntent,
-	"DeactivateInstantAnswerIntent" : doDeactivateInstantAnswerIntent,
-
-	"AMAZON.HelpIntent" : doHelpIntent,
-
-	"AMAZON.StartOverIntent" : doStartOverIntent,
-	"AMAZON.YesIntent" : doYesIntent,
-	"AMAZON.NoIntent" : doNoIntent,
-	
-	"NumberAnswerIntent" : doNumberAnswerIntent,
-	
-	"AMAZON.PreviousIntent" : doPreviousIntent,
-	"AMAZON.NextIntent" : doNextIntent,
-	"AMAZON.ScrollUpIntent" : doScrollUpIntent,
-	"AMAZON.ScrollLeftIntent" : doScrollLeftIntent,
-	"AMAZON.ScrollDownIntent" : doScrollDownIntent,
-	"AMAZON.ScrollRightIntent" : doScrollRightIntent,
-	"AMAZON.PageUpIntent" : doPageUpIntent,
-	"AMAZON.PageDownIntent" : doPageDownIntent,
-	"AMAZON.MoreIntent" : doMoreIntent,
-	"AMAZON.NavigateSettingsIntent" : doNavigateSettingsIntent,
-	
 	"AMAZON.StopIntent" : function(intent, session, response) {
 		clearSessionData(session);
 		speech.goodbye(intent.name, "*", response);
@@ -271,13 +65,7 @@ ChessSkill.prototype.intentHandlers = {
 };
 
 
-ChessSkill.prototype.actionHandlers = {
-	"ActionHELP" : doShowAction,
-	"ActionHELP_REGELN" : doShowAction,
-	"ActionHELP_SPRACHSTEUERUNG" : doShowAction,
-	"ActionHELP_KOMMANDOS" : doShowAction,
-	"ActionHELP_WEITERES" : doShowAction,
-	"ActionHOME" : doActionHOME
+FranzisSkill.prototype.actionHandlers = {
 };
 
 
@@ -287,12 +75,10 @@ exports.handler = function(event, context) {
 	
 	speech.set_locale(getEventLocale(event)); 
 	
-	// Create an instance of the ChessSkill skill.
-	var chessSkill = new ChessSkill();
+	// Create an instance of the FranzisSkill skill.
+	var franzisSkill = new FranzisSkill();
 	removeSessionRequest(event.session);
-	setRequestHasDisplay(event.session, hasEventDisplay(event));
-	setRequestDisplayToken(event.session, getEventDisplayToken(event));
-	chessSkill.execute(event, context);
+	franzisSkill.execute(event, context);
 };
 
 // initialize tests
@@ -304,296 +90,6 @@ exports.initTests = function(url, param, callback) {
 	});
 }
 
-/* ============== */
-/* ENTRY METHODEN */
-/* ============== */
-
-function doLaunch(session, response) {
-	initUserAndConnect(undefined, session, response, function successFunc() {
-		if (!getUserPhase(session)) {
-			execIntro(session, response);
-		}
-		else {
-			if (getSessionGameMovesCount(session) === 0) {
-				execWelcome(session, response);
-			}
-			else {
-				msg = speech.createMsg("INTERN", "GAME_CONTINUED");
-				execDisplayField(session, response, msg)
-			}
-		}
-	});
-}
-
-function doNewGameIntent(intent, session, response) {
-	// TODO: confirm with yes / no
-	initUserAndConnect(intent, session, response, function successFunc() {
-		execDoNewGame(intent, session, response);
-	});
-}
-
-function doPlayerMoveIntent(intent, session, response) {
-	initUserAndConnect(intent, session, response, function successFunc() {
-		execDoMove(intent, session, response);
-	});
-}
-
-
-function doRollbackIntent(intent, session, response) {
-	initUserAndConnect(intent, session, response, function successFunc() {
-		execDoRollback(session, response);
-	});
-}
-
-
-function doAIStartsIntent(intent, session, response) {
-	initUserAndConnect(intent, session, response, function successFunc() {
-		if (getSessionGameMovesCount(session) === 0) {
-			execDoAIMove(session, response);
-		}
-		else {
-			msg = speech.createMsg("INTERN", "AI_STARTS_NOT_ALLOWED");
-			execDisplayField(session, response, msg)
-		}
-	});
-}
-
-function doActivateShowDisplayIntent(intent, session, response) {
-	initUserAndConnect(intent, session, response, function successFunc() {
-		execSetOptShow(intent, session, response, true);
-	});
-}
-
-function doDeactivateShowDisplayIntent(intent, session, response) {
-	initUserAndConnect(intent, session, response, function successFunc() {
-		execSetOptShow(intent, session, response, false);
-	});
-}
-
-function doChangeAILevelIntent(intent, session, response) {
-	initUserAndConnect(intent, session, response, function successFunc() {
-		execChangeAILevel(intent, session, response);
-	});
-}
-
-function doAnimalConnectIntent(intent, session, response) {
-	initUserAndConnect(intent, session, response, function successFunc() {
-		execAnimalConnect(intent, session, response);
-	});
-}
-
-function doActivateInstantAnswerIntent(intent, session, response) {
-	initUserAndConnect(intent, session, response, function successFunc() {
-		setUserInstantAnswer(session, true);
-		execDisplayField(session, response);
-	});
-}
-
-function doDeactivateInstantAnswerIntent(intent, session, response) {
-	initUserAndConnect(intent, session, response, function successFunc() {
-		setUserInstantAnswer(session, false);
-		execDisplayField(session, response);
-	});
-}
-
-function doHelpIntent(intent, session, response) {
-	initUserAndConnect(intent, session, response, function successFunc() {
-		askQuestion(session, response, "HELP");
-	});
-}
-
-function doShowAction(actionName, session, response) {
-	handleQuestion(session);
-	initUserAndConnect(intent, session, response, function successFunc() {
-		showAction(session, response, actionName);
-	});
-}
-
-function doActionHOME(actionName, session, response) {
-	handleQuestion(session);
-	execDisplayField(session, response);
-}
-
-function doStartOverIntent(intent, session, response) {
-	doNewGame(session, response);
-}
-
-function doYesIntent(intent, session, response) {
-	initUserAndConnect(intent, session, response, function successFunc() {
-		noQuestionAsked(session, response);
-	});
-}
-
-function mapNoGUIMsg(session, msgKey) {
-	if (getRequestHasDisplay(session)) {
-		return msgKey;
-	}
-	if (msgKey === "HELP_REGELN") {
-		return "HELP_REGELN_NOGUI";
-	}
-	return msgKey;
-}
-
-
-function doNoIntent(intent, session, response) {
-	initUserAndConnect(intent, session, response, function successFunc() {
-		noQuestionAsked(session, response);
-	});
-}
-
-function doNumberAnswerIntent(intent, session, response) {
-	initUserAndConnect(intent, session, response, function successFunc() {
-		noQuestionAsked(session, response);
-	});
-}
-
-function doPreviousIntent(intent, session, response) {
-	var question = handleQuestion(session);
-	initUserAndConnect(intent, session, response, function successFunc() {
-		if (question === undefined) {
-			didNotUnterstand(intent, session, response);
-		}
-		else {
-			execDisplayField(session, response)
-		}
-	});
-	
-}
-
-
-function handleQuestion(session) {
-	var question = getSessionQuestion(session);
-	var displayToken = getRequestDisplayToken(session);
-	if (displayToken !== undefined) {
-		question = TOKEN_TO_QUESTION_MAPPING[displayToken];
-	}
-	setSessionQuestion(session, "handled");
-	logObject("QUESTION", question);
-	return question;
-}
-
-function checkUnhandledQuestion(session) {
-	var question = getSessionQuestion(session);
-	if (question === "handled") {
-		removeSessionQuestion(session);
-		return undefined;
-	}
-	var displayToken = getRequestDisplayToken(session);
-	if (displayToken !== undefined) {
-		question = TOKEN_TO_QUESTION_MAPPING[displayToken];
-	}
-	return question;
-}
-
-
-function noQuestionAsked(session, response) {
-	var msg = speech.createMsg("INTERN", "NO_QUESTION_ASKED");
-	execDisplayField(session, response, msg)
-}
-
-
-function doNextIntent(intent, session, response) {
-	didNotUnterstand(intent, session, response);
-}
-
-function doScrollUpIntent(intent, session, response) {
-	didNotUnterstand(intent, session, response);
-}
-
-function doScrollLeftIntent(intent, session, response) {
-	didNotUnterstand(intent, session, response);
-}
-
-function doScrollDownIntent(intent, session, response) {
-	didNotUnterstand(intent, session, response);
-}
-
-function doScrollRightIntent(intent, session, response) {
-	didNotUnterstand(intent, session, response);
-}
-
-function doPageUpIntent(intent, session, response) {
-	didNotUnterstand(intent, session, response);
-}
-
-function doPageDownIntent(intent, session, response) {
-	didNotUnterstand(intent, session, response);
-}
-
-function doMoreIntent(intent, session, response) {
-	didNotUnterstand(intent, session, response);
-}
-
-function doNavigateSettingsIntent(intent, session, response) {
-	changeSettings(intent, session, response);
-}
-
-/* ============= */
-/* SEND METHODEN */
-/* ============= */
-
-function handleSessionQuestion(intent, session, response) {
-	var question = getSessionQuestion(session);
-	if (!question) { 
-		// no question set in session
-		return false;
-	}
-	// check if intent is valid for question
-	var validIntents = QUESTION_TO_INTENTS_MAPPING[question];
-	if (!validIntents) {
-		return false;
-	}
-	if (validIntents.indexOf(intent.name) === -1) {
-		var prefixMsg = speech.createMsg("INTERN", "NO_ANSWER_TO_QUESTION");
-		askQuestion(session, response, question, prefixMsg)
-		return true;
-	}
-	execAnswer(question, intent, session, response);
-	return true;
-}
-
-function execAnswer(question, intent, session, response) {
-	switch (question) {
-	case "INTRO.1": {
-		var optShow = (intent.name === "AMAZON.YesIntent");
-		setUserOptShow(session, optShow);
-		var msg_code = (optShow) ? "OPT_SHOW_ACTIVATED" : "OPT_SHOW_DEACTIVATED";
-		var prefixMsg = speech.createMsg("INTERN", msg_code, optShow);
-		askQuestion(session, response, "INTRO.2", prefixMsg);
-		break;
-	}
-	case "INTRO.2":
-	case "INTRO.2b": {
-		var aiLevel = getFromIntent(intent, "num");
-		console.log("aiLevel=" + aiLevel);
-		if ((!aiLevel) || (aiLevel < 1) || (aiLevel > 7)) {
-			askQuestion(session, response, "INTRO.2b");
-		}
-		else {
-			send(session, response, getSessionGameId(session), "setAILevel", aiLevel, "", function successFunc(result) {
-				setUserAILevel(session, aiLevel);
-				var prefixMsg = speech.createMsg("INTERN", "AI_LEVEL_CHANGED", aiLevel);
-				askQuestion(session, response, "INTRO.3", prefixMsg);
-			});
-		}
-		break;
-	}
-	case "INTRO.3": {
-		var detailHelp = (intent.name === "AMAZON.YesIntent");
-		if (detailHelp) {
-			askQuestion(session, response, "HELP_DETAIL");
-		}
-		else {
-			execDisplayField(session, response, msg)
-		}
-		break;
-	}
-	default: {
-		speech.respond("Generic", "E_QUESTION", response, question);
-		break;
-	}
-	}
-}
 
 /* ============= */
 /* SEND METHODEN */
@@ -1239,7 +735,7 @@ function getEventDisplayToken(event) {
 /* USER DB */
 /* ======= */
 
-function initUser(session, response, successCallback) {
+function initUser(intent, session, response, successCallback) {
 	if (hasDBUserInSession(session)) {
 		successCallback();
 	} else {
@@ -1247,7 +743,7 @@ function initUser(session, response, successCallback) {
 		if (!amzUserId) {
 			speech.respond("INTERN", "NO_AMZ_USERID", response);
 		} else {
-			sendDB(session, response, "getOrCreateUserByAppAndName", "CHESS.USER", amzUserId, function callback(result) {
+			sendDB(session, response, "getOrCreateUserByAppAndName", "FRANZI.USER", amzUserId, function callback(result) {
 						var dbUser = result.user;
 						var userDataOk = unmarshallUserData(dbUser);
 						if (!userDataOk) {
@@ -1312,38 +808,12 @@ function getMarshalledUserData(session) {
 
 /* user properties */
 
-function getUserInstantAnswer(session, defaultValue) {
-	return getUserProperty(session, "instantAnswer", defaultValue);
-}
 function getUserPhase(session, defaultValue) {
 	return getUserProperty(session, "phase", defaultValue);
 }
-function getUserHadIntro(session, defaultValue) {
-	return getUserProperty(session, "hadIntro", defaultValue);
-}
 
-function getUserOptShow(session, defaultValue) {
-	return getUserProperty(session, "optShow", defaultValue);
-}
-
-function getUserAILevel(session, defaultValue) {
-	return getUserProperty(session, "aiLevel", defaultValue);
-}
-
-function setUserAILevel(session, value) {
-	return setUserProperty(session, "aiLevel", value);
-}
-function setUserOptShow(session, value) {
-	return setUserProperty(session, "optShow", value);
-}
 function setUserPhase(session, value) {
 	return setUserProperty(session, "phase", value);
-}
-function setUserHadIntro(session, value) {
-	return setUserProperty(session, "hadIntro", value);
-}
-function setUserInstantAnswer(session, value) {
-	return setUserProperty(session, "instantAnswer", value);
 }
 
 
@@ -1428,80 +898,6 @@ function setDBUserInSession(session, dbUser) {
 /* REST CALL */
 /* ========= */
 
-function send(session, response, gameId, cmd, param1, param2, successCallback, errorCallback) {
-	sendCommand(session, gameId, cmd, param1, param2, function callbackFunc(
-			result) {
-		var code = ((!result) || (!result.code)) ? "?" : result.code;
-		if (code.startsWith("S_")) {
-			successCallback(result);
-		} else if (errorCallback !== undefined) {
-			errorCallback(result, code);
-		} else {
-			speech.respond("SEND_" + cmd, code, response);
-		}
-	});
-}
-
-function sendCommand(session, gameId, cmd, param1, param2, callback) {
-
-	var result = "";
-
-	var query = querystring.stringify({
-		"gameId" : gameId,
-		"cmd" : cmd,
-		"param1" : param1,
-		"param2" : param2
-	});
-	var url = endpoint + "?" + query;
-	console.log('CALL: ' + url);
-
-	var urlObj = URL.parse(url);
-	var options = {
-		protocol : urlObj.protocol,
-		host : urlObj.hostname,
-		port : urlObj.port,
-		path : urlObj.path,
-		auth : authUsername + ':' + authPassword
-	};
-
-	http.get(options, function(res) {
-		var responseString = '';
-		if (res.statusCode != 200) {
-			console.log("ERROR HTTP STATUS " + res.statusCode);
-			result = {
-				code : "E_CONNECT",
-				errmsg : "h.t.t.p. Status " + res.statusCode
-			};
-			callback(result);
-		}
-		res.on('data', function(data) {
-			responseString += data;
-		});
-		res.on('end', function() {
-			console.log("get-end: " + responseString);
-			var responseObject;
-			try {
-				responseObject = JSON.parse(responseString);
-			} catch (e) {
-				console.log("E_CONNECT INVALID JSON-FORMAT: " + e.message);
-				responseObject = {
-					code : "E_CONNECT",
-					errmsg : "Die Serverantwort ist nicht valide."
-				};
-			}
-			callback(responseObject);
-
-		});
-	}).on('error', function(e) {
-		console.log("E_CONNECT: " + e.message);
-		result = {
-			code : "E_CONNECT",
-			errmsg : e.message
-		};
-		callback(result);
-	});
-}
-
 function sendDB(session, response, cmd, param1, param2, successCallback) {
 	sendDBCommand(session, cmd, param1, param2, function callbackFunc(result) {
 		var code = ((!result) || (!result.code)) ? "?" : result.code;
@@ -1572,6 +968,69 @@ function sendDBCommand(session, cmd, param1, param2, callback) {
 	});
 }
 
-function logObject(prefix, object) {
-	console.log(prefix + ": " + JSON.stringify(object));
+
+/* ============= */
+/* DO FUNKTIONEN */
+/* ============= */
+
+function doLaunch(session, response) {
+	initUser(undefined, session, response, function successFunc() {
+		if (!getUserPhase(session)) {
+			executeFirstTimeLaunch(session, response);
+		}
+		else {
+			executeLaunch(session, response);
+		}
+	});
 }
+
+function doSagHalloIntent(intent, session, response) {
+	initUser(intent, session, response, function successFunc() {
+		executeSagHalloIntent(intent, session, response);
+	});
+}
+
+function doAddiereZahlenIntent(intent, session, response) {
+	initUser(intent, session, response, function successFunc() {
+		var zahl1 = getFromIntent(intent, "zahl1");
+		var zahl2 = getFromIntent(intent, "zahl2");
+		executeAddiereZahlenIntent(intent, session, response, zahl1, zahl2);
+	});
+}
+
+
+/* =============== */
+/* HILFSFUNKTIONEN */
+/* =============== */
+
+
+function logVariable(prefix, variable) {
+	console.log(prefix + ": " + JSON.stringify(variable));
+}
+
+
+/* ================== */
+/* EXECUTE FUNKTIONEN */
+/* ================== */
+
+function executeFirstTimeLaunch(session, response) {
+	speech.ask("Willkommen zum ersten Mal. Hier ist eine Einführung. Fertig. Was möchtest Du jetzt tun?");
+}
+
+function executeLaunch(session, response) {
+	speech.ask("Willkommen zurück, Was möchtest Du jetzt tun?");
+}
+
+function executeSagHalloIntent(session, response) {
+	speech.tell("Halli, Hallo!");
+}
+
+function executeAddiereZahlenIntent(session, response, zahl1, zahl2) {
+	logVariable("Zahl 1", zahl1);
+	logVariable("Zahl 2", zahl2);
+	speech.tell("Das weiss ich doch nicht!");
+}
+
+
+
+

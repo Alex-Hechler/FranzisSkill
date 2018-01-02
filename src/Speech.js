@@ -1393,4 +1393,14 @@ function setParams(msg, param1) {
 }
 
 
-module.exports = {set_locale, respond, createMsg, respondMsg, respondMsgWithDirectives, outputMsgWithDirectives, goodbye};
+function ask(response, text) {
+	response.askWithCard(text, "Franzis Skill", "Franzis Skill", text);
+}
+
+function tell(response, text) {
+	response.tellWithCard(text, "Franzis Skill", text);
+}
+
+
+
+module.exports = {set_locale, respond, createMsg, respondMsg, respondMsgWithDirectives, outputMsgWithDirectives, goodbye, ask, tell};
