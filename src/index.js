@@ -545,6 +545,7 @@ function sendDBCommand(session, cmd, param1, param2, callback) {
 function doLaunch(session, response) {
 	initUser(undefined, session, response, function successFunc() {
 		if (!getUserPhase(session)) {
+			setUserPhase(session, "INIT");
 			executeFirstTimeLaunch(session, response);
 		}
 		else {
