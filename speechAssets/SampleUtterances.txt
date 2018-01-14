@@ -7,6 +7,9 @@ AddiereZahlenIntent Was ergibt {zahlA} plus {zahlB}
 AddiereZahlenIntent Was ist {zahlA} plus {zahlB} 
 AddiereZahlenIntent Was ist die Summe aus {zahlA} und {zahlB} 
 
+HeuteFeiertagIntent Ist heute ein Feiertag
+HeuteFeiertagIntent Haben wir heute einen Feiertag
+
 TagAbfragenIntent Welchen Tag haben wir heute
 TagAbfragenIntent Was ist heute für ein Tag
 

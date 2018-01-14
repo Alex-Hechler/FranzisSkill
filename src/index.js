@@ -60,6 +60,7 @@ FranzisSkill.prototype.eventHandlers.onLaunch = function(launchRequest, session,
 FranzisSkill.prototype.intentHandlers = {
 
 	"SagHalloIntent" : doSagHalloIntent,
+	"HeuteFeiertagIntent" : doHeuteFeiertagIntent,
 	"AddiereZahlenIntent" : doAddiereZahlenIntent,
 	"TagAbfragenIntent" : doTagAbfragenIntent,
     
@@ -492,7 +493,11 @@ function doSagHalloIntent(intent, session, response) {
 		executeSagHalloIntent(session, response);
 	});
 }
-
+function doHeuteFeiertagIntent(intent, session, response) {
+	initUser(intent, session, response, function successFunc() {
+		executeHeuteFeiertagIntent(session, response);
+	});
+}
 function doTagAbfragenIntent(intent, session, response) {
 	initUser(intent, session, response, function successFunc() {
 		// Parameter aus Intent.Slot auslesen
@@ -548,14 +553,53 @@ function executeSagHalloIntent(session, response) {
 	tell(session, response, "Halli, Hallo!");
 }
 
+var FEIERTAGE = {
+	"20180114" : "Testfeiertag",
+	"20180401" : "Ostersonntag",
+	"20180402" : "Ostermontag"
+};
 var WOCHENTAGE =  ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+var MONAT = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+
+function datefuersort( date ) {
+	var monat; 
+	if (date.getMonth()+1 < 10) {
+		monat = "0" + (date.getMonth()+1);
+	}
+	else {
+		monat = date.getMonth()+1;
+	}
+	var tag;
+	if (date.getDate() < 10) {
+		tag = "0" + (date.getDate());
+	}
+	else {
+		tag = date.getDate();
+	}
+	var sortdate = date.getFullYear() + "" + monat + "" + tag;
+	return sortdate;
+}
+function executeHeuteFeiertagIntent(session, response) {
+	var date = new Date();
+	var sortdate = datefuersort(date);
+	var antwort = "Heute ist " + sortdate;
+	
+	logVariable("sortdate", sortdate);
+	var feiertagname = FEIERTAGE[sortdate];
+	logVariable("feiertagname", feiertagname);
+	if (feiertagname) {
+		antowrt = antwort + " und das ist " + feiertagname;
+	}
+	
+	tell(session, response, antwort);
+}
 function executeTagAbfragenIntent(session, response) {
 	var date = new Date();
 	var tag = WOCHENTAGE[date.getDay()];
-	var antwort = "Heute ist " + tag;
+	var datum = date.getDate() + ". " + MONAT[date.getMonth()];
+	var antwort = "Heute ist " + tag + " der " + datum;
 	tell(session, response, antwort);
 }
-
 function executeAddiereZahlenIntent(session, response, zahlA, zahlB) {
 	logVariable("Zahl A", zahlA);
 	logVariable("Zahl B", zahlB);

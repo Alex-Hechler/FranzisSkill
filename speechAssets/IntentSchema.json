@@ -3,6 +3,9 @@
   	{
   		"intent": "TagAbfragenIntent"
   	},
+  	{
+  		"intent": "HeuteFeiertagIntent"
+  	},
    	{
       "intent": "SagHalloIntent"
     },
