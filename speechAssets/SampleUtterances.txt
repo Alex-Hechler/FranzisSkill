@@ -7,5 +7,9 @@ AddiereZahlenIntent Was ergibt {zahlA} plus {zahlB}
 AddiereZahlenIntent Was ist {zahlA} plus {zahlB} 
 AddiereZahlenIntent Was ist die Summe aus {zahlA} und {zahlB} 
 
+TagAbfragenIntent Welchen Tag haben wir heute
+TagAbfragenIntent Was ist heute für ein Tag
+TagAbfragenIntent Welches Datum haben wir
+
 AMAZON.StopIntent Stop
 AMAZON.StopIntent Abbrechen

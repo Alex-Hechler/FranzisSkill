@@ -1,7 +1,9 @@
 { 
   "intents": [
-  
-    {
+  	{
+  		"intent": "TagAbfragenIntent"
+  	},
+   	{
       "intent": "SagHalloIntent"
     },
 
@@ -24,3 +26,4 @@
     }    
   ]
 }
+

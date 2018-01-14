@@ -52,10 +52,16 @@ FranzisSkill.prototype.eventHandlers.onLaunch = function(launchRequest, session,
 };
 
 
+    // ==================== //
+    // TODO: INTENT HANDLER //
+    //==================== //
+
+
 FranzisSkill.prototype.intentHandlers = {
 
 	"SagHalloIntent" : doSagHalloIntent,
 	"AddiereZahlenIntent" : doAddiereZahlenIntent,
+	"TagAbfragenIntent" : doTagAbfragenIntent,
     
 	"AMAZON.StopIntent" : function(intent, session, response) {
 		clearSessionData(session);
@@ -465,9 +471,9 @@ function sendDBCommand(session, cmd, param1, param2, callback) {
 }
 
 
-/* ============= */
-/* DO FUNKTIONEN */
-/* ============= */
+/* =================== */
+/* TODO: DO FUNKTIONEN */
+/* =================== */
 
 function doLaunch(session, response) {
 	initUser(undefined, session, response, function successFunc() {
@@ -484,6 +490,13 @@ function doLaunch(session, response) {
 function doSagHalloIntent(intent, session, response) {
 	initUser(intent, session, response, function successFunc() {
 		executeSagHalloIntent(session, response);
+	});
+}
+
+function doTagAbfragenIntent(intent, session, response) {
+	initUser(intent, session, response, function successFunc() {
+		// Parameter aus Intent.Slot auslesen
+		executeTagAbfragenIntent(session, response);
 	});
 }
 
@@ -520,7 +533,7 @@ function logVariable(prefix, variable) {
 }
 
 /* ================== */
-/* EXECUTE FUNKTIONEN */
+/* TODO: EXECUTE FUNKTIONEN */
 /* ================== */
 
 function executeFirstTimeLaunch(session, response) {
@@ -533,6 +546,11 @@ function executeLaunch(session, response) {
 
 function executeSagHalloIntent(session, response) {
 	tell(session, response, "Halli, Hallo!");
+}
+
+function executeTagAbfragenIntent(session, response) {
+	var antwort = "Heute ist Mittwoch der 15. Januar";
+	tell(session, response, antwort);
 }
 
 function executeAddiereZahlenIntent(session, response, zahlA, zahlB) {
