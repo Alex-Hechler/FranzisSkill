@@ -548,8 +548,11 @@ function executeSagHalloIntent(session, response) {
 	tell(session, response, "Halli, Hallo!");
 }
 
+var WOCHENTAGE =  ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
 function executeTagAbfragenIntent(session, response) {
-	var antwort = "Heute ist Mittwoch der 15. Januar";
+	var date = new Date();
+	var tag = WOCHENTAGE[date.getDay()];
+	var antwort = "Heute ist " + tag;
 	tell(session, response, antwort);
 }
 
