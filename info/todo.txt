@@ -1,1 +1,5 @@
 * Logo
+Dialog: Möchtest du noch etwas wissen oder ändern?
+hilfe
+intro: first
+intro: danach

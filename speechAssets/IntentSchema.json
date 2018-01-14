@@ -4,6 +4,9 @@
   		"intent": "TagAbfragenIntent"
   	},
   	{
+  		"intent": "NaechsterFeiertagIntent"
+  	},
+  	{
   		"intent": "HeuteFeiertagIntent"
   	},
    	{

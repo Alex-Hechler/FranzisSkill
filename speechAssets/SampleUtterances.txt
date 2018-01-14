@@ -10,6 +10,9 @@ AddiereZahlenIntent Was ist die Summe aus {zahlA} und {zahlB}
 HeuteFeiertagIntent Ist heute ein Feiertag
 HeuteFeiertagIntent Haben wir heute einen Feiertag
 
+NaechsterFeiertagIntent Wann ist der nächste Feiertag
+NaechsterFeiertagIntent Wann kommt der nächste Feiertag
+
 TagAbfragenIntent Welchen Tag haben wir heute
 TagAbfragenIntent Was ist heute für ein Tag
 

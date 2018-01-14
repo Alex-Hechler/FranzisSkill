@@ -60,6 +60,7 @@ FranzisSkill.prototype.eventHandlers.onLaunch = function(launchRequest, session,
 FranzisSkill.prototype.intentHandlers = {
 
 	"SagHalloIntent" : doSagHalloIntent,
+	"NaechsterFeiertagIntent": doNaechsterFeiertagIntent,
 	"HeuteFeiertagIntent" : doHeuteFeiertagIntent,
 	"AddiereZahlenIntent" : doAddiereZahlenIntent,
 	"TagAbfragenIntent" : doTagAbfragenIntent,
@@ -493,6 +494,11 @@ function doSagHalloIntent(intent, session, response) {
 		executeSagHalloIntent(session, response);
 	});
 }
+function doNaechsterFeiertagIntent(intent, session, response) {
+	initUser(intent, session, response, function successFunc() {
+		executeNaechsterFeiertagIntent(session, response);
+	});
+}
 function doHeuteFeiertagIntent(intent, session, response) {
 	initUser(intent, session, response, function successFunc() {
 		executeHeuteFeiertagIntent(session, response);
@@ -560,7 +566,6 @@ var FEIERTAGE = {
 };
 var WOCHENTAGE =  ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
 var MONAT = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
-
 function datefuersort( date ) {
 	var monat; 
 	if (date.getMonth()+1 < 10) {
@@ -579,18 +584,48 @@ function datefuersort( date ) {
 	var sortdate = date.getFullYear() + "" + monat + "" + tag;
 	return sortdate;
 }
+function datefuerantwort(date) {
+	var antwortdate;
+	if(typeof(date) === "date") {
+		antwortdate = date.getDate() + ". " + MONAT[date.getMonth()] + " " + date.getFullYear();
+	}
+	if(typeof(date) === "string") {
+		var year = date.slice(0, 4);
+		var month = date.slice(4, 6);
+		var tag = date.slice(6) - 0;
+		antwortdate = tag + ". " + MONAT[month-1] + " " + year;
+	}
+	return antwortdate;
+}
+function executeNaechsterFeiertagIntent(session, response) {
+	var date = new Date();
+	var antwort;
+	var sortdate = datefuersort(date);
+	for(var feiertag in FEIERTAGE){
+		if(feiertag > sortdate){
+			antwort = "Der nächste Feiertag ist " + FEIERTAGE[feiertag] + " am " + datefuerantwort(feiertag);
+			break;
+		}
+		if(feiertag === sortdate) {
+			antwort = "Heute ist " + FEIERTAGE[feiertag] + "! :)";
+			break;
+		}
+	}
+	if(!antwort){
+		antwort = "Es wurde kein Feiertag gefunden. Du Armer. :(";
+	}
+	tell(session, response, antwort);
+}
 function executeHeuteFeiertagIntent(session, response) {
 	var date = new Date();
 	var sortdate = datefuersort(date);
-	var antwort = "Heute ist " + sortdate;
-	
-	logVariable("sortdate", sortdate);
 	var feiertagname = FEIERTAGE[sortdate];
-	logVariable("feiertagname", feiertagname);
 	if (feiertagname) {
-		antowrt = antwort + " und das ist " + feiertagname;
+		antwort = "Heute ist " + feiertagname + "!";
 	}
-	
+	else {
+		antwort = "Heute ist leider kein Feiertag."
+	}
 	tell(session, response, antwort);
 }
 function executeTagAbfragenIntent(session, response) {
