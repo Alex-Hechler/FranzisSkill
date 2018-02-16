@@ -1,0 +1,19 @@
+AnswerIntent Die Antwort ist {Answer}
+AnswerIntent Es ist {Answer}
+AnswerIntent {Answer} ist die Antowrt
+AnswerOnlyIntent {Answer}
+
+AMAZON.StartOverIntent starte das Spiel
+AMAZON.StartOverIntent Neues Spiel
+AMAZON.StartOverIntent starte ein Spiel
+AMAZON.StartOverIntent starte ein neues Spiel
+
+DontKnowIntent Ich weiﬂ es nicht
+DontKnowIntent keine Ahnung
+DontKnowIntent Weiter
+DontKnowIntent N‰chste Frage
+DontKnowIntent Das weiﬂ ich nicht
+DontKnowIntent Wer weiﬂ
+DontKnowIntent Ich kenne die Antwort auf diese Frage nicht
+DontKnowIntent Die Antwort weiﬂ ich nicht
+DontKnowIntent woher soll ich das wissen

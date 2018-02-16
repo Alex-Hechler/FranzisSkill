@@ -1,5 +1,17 @@
-* Logo
-Dialog: Möchtest du noch etwas wissen oder ändern?
+Logo
 hilfe
+
 intro: first
 intro: danach
+bundesland auswählen/wechseln
+abfragen nach Datum
+abfrage nach feiertag
+feiertage vorbelegen
+-----
+
+Abfrage mit Feiertag und Datum: Ist am {datum} {feiertag}?
+session handling(dialog)
+feiertage hinzufügen/löschen/aufsagen
+mehrere Treffer an einem Tag (Feiertag + Geburtstag)
+
+gesetzliche Feiertage

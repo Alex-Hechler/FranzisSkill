@@ -14,15 +14,11 @@
     },
 
     {
-      "intent": "AddiereZahlenIntent",
+      "intent": "DatumAbfrageIntent",
       "slots": [
         {
-          "name": "zahlA",
-          "type": "AMAZON.NUMBER"
-        },
-        {
-          "name": "zahlB",
-          "type": "AMAZON.NUMBER"
+          "name": "datum",
+          "type": "AMAZON.DATE"
         }
       ]
     },

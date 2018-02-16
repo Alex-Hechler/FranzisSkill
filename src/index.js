@@ -62,7 +62,7 @@ FranzisSkill.prototype.intentHandlers = {
 	"SagHalloIntent" : doSagHalloIntent,
 	"NaechsterFeiertagIntent": doNaechsterFeiertagIntent,
 	"HeuteFeiertagIntent" : doHeuteFeiertagIntent,
-	"AddiereZahlenIntent" : doAddiereZahlenIntent,
+	"DatumAbfrageIntent" : doDatumAbfrageIntent,
 	"TagAbfragenIntent" : doTagAbfragenIntent,
     
 	"AMAZON.StopIntent" : function(intent, session, response) {
@@ -511,11 +511,10 @@ function doTagAbfragenIntent(intent, session, response) {
 	});
 }
 
-function doAddiereZahlenIntent(intent, session, response) {
+function doDatumAbfrageIntent(intent, session, response) {
 	initUser(intent, session, response, function successFunc() {
-		var zahl1 = getFromIntent(intent, "zahlA");
-		var zahl2 = getFromIntent(intent, "zahlB");
-		executeAddiereZahlenIntent(session, response, zahl1, zahl2);
+		var datum = getFromIntent(intent, "datum");
+		executeDatumAbfrageIntent(session, response, datum);
 	});
 }
 
@@ -559,13 +558,36 @@ function executeSagHalloIntent(session, response) {
 	tell(session, response, "Halli, Hallo!");
 }
 
-var FEIERTAGE = {
-	"20180114" : "Testfeiertag",
-	"20180401" : "Ostersonntag",
-	"20180402" : "Ostermontag"
-};
+var FEIERTAGE = [
+		{ start: "20180401", name: "Ostersonntag" },
+		{ start: "20180402", name: "Ostermontag"},
+		{ start: "20181224", name: "Heilig Abend"}
+];
 var WOCHENTAGE =  ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
 var MONAT = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+
+/**
+ * Findet den ersten Feiertag in der FEIERTAGE Liste und gibt dessen Namen zurück.
+ * @param sortdate
+ * @returns Name des ersten gefundenen Feiertags.
+ */
+function findFirstFeiertag(sortdate) {
+	var feiertag;
+	for(var )
+}
+
+/**
+ * wandelt das von AMAZON im slot gelieferte Datum in unser sort-format-datum um: 'yyyy-mm-dd' -> 'yyyymmdd'.
+ * @param amzdate
+ * @returns
+ */
+function amazondatefuersort(amzdate) {
+	var year = amzdate.slice(0, 4);
+	var month = amzdate.slice(5, 7);
+	var day = amzdate.slice(8, 10);
+	var sortdate = year + month + day;
+	return sortdate;
+}
 function datefuersort( date ) {
 	var monat; 
 	if (date.getMonth()+1 < 10) {
@@ -635,10 +657,26 @@ function executeTagAbfragenIntent(session, response) {
 	var antwort = "Heute ist " + tag + " der " + datum;
 	tell(session, response, antwort);
 }
-function executeAddiereZahlenIntent(session, response, zahlA, zahlB) {
-	logVariable("Zahl A", zahlA);
-	logVariable("Zahl B", zahlB);
-	tell(session, response, "Das weiss ich doch nicht!");
+/**
+ * 
+ * @param session
+ * @param response
+ * @param datum enthält das AMAZON.DATE format 'yyyy-mm-dd'
+ * @returns
+ */
+function executeDatumAbfrageIntent(session, response, datum) {
+	logVariable("Datum", datum);
+	var antwort
+	var a = amazondatefuersort(datum);
+	var date = datefuerantwort(a)
+	var feiertag = FEIERTAGE[a];
+	if(feiertag) {
+		antwort = "Am " + date + " ist " + feiertag
+	}
+	else {
+		antwort = "Am " + date + " ist leider kein Feiertag."
+	}
+	tell(session, response, antwort);
 }
 
 

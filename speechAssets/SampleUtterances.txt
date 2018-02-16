@@ -2,10 +2,9 @@ SagHalloIntent Sage Hallo
 SagHalloIntent Begrüß mich
 SagHalloIntent Sag Guten Tag
 
-AddiereZahlenIntent Addiere {zahlA} und {zahlB}   
-AddiereZahlenIntent Was ergibt {zahlA} plus {zahlB} 
-AddiereZahlenIntent Was ist {zahlA} plus {zahlB} 
-AddiereZahlenIntent Was ist die Summe aus {zahlA} und {zahlB} 
+
+DatumAbfrageIntent Welcher Feiertag ist am {datum}
+DatumAbfrageIntent Was ist am {datum}
 
 HeuteFeiertagIntent Ist heute ein Feiertag
 HeuteFeiertagIntent Haben wir heute einen Feiertag
