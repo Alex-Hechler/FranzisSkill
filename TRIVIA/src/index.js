@@ -15,65 +15,26 @@
 const Alexa = require('alexa-sdk');
 const questions = require('./question');
 
-const ANSWER_COUNT = 4; // The number of possible answers per trivia question.
-const GAME_LENGTH = 5;  // The number of questions per trivia game.
+const ANSWER_COUNT = 5; // The number of possible answers per trivia question.
+const GAME_LENGTH = 2;  // The number of questions per trivia game.
 const GAME_STATES = {
     TRIVIA: '_TRIVIAMODE', // Asking trivia questions.
     START: '_STARTMODE', // Entry point, start the game.
     HELP: '_HELPMODE', // The user is asking for help.
 };
-const APP_ID = undefined; // TODO replace with your app ID (OPTIONAL)
+const APP_ID = 'amzn1.ask.skill.11fe374b-974a-4cc2-be41-2773b17836bd'; // TODO replace with your app ID (OPTIONAL)
 
 /**
  * When editing your questions pay attention to your punctuation. Make sure you use question marks or periods.
  * Make sure the first answer is the correct one. Set at least ANSWER_COUNT answers, any extras will be shuffled in.
  */
 const languageString = {
-    'en': {
-        'translation': {
-            'QUESTIONS': questions['QUESTIONS_EN_US'],
-            'GAME_NAME': 'Reindeer Trivia', // Be sure to change this for your skill.
-            'HELP_MESSAGE': 'I will ask you %s multiple choice questions. Respond with the number of the answer. ' +
-                'For example, say one, two, three, or four. To start a new game at any time, say, start game. ',
-            'REPEAT_QUESTION_MESSAGE': 'To repeat the last question, say, repeat. ',
-            'ASK_MESSAGE_START': 'Would you like to start playing?',
-            'HELP_REPROMPT': 'To give an answer to a question, respond with the number of the answer. ',
-            'STOP_MESSAGE': 'Would you like to keep playing?',
-            'CANCEL_MESSAGE': 'Ok, let\'s play again soon.',
-            'NO_MESSAGE': 'Ok, we\'ll play another time. Goodbye!',
-            'TRIVIA_UNHANDLED': 'Try saying a number between 1 and %s',
-            'HELP_UNHANDLED': 'Say yes to continue, or no to end the game.',
-            'START_UNHANDLED': 'Say start to start a new game.',
-            'NEW_GAME_MESSAGE': 'Welcome to %s. ',
-            'WELCOME_MESSAGE': 'I will ask you %s questions, try to get as many right as you can. ' +
-            'Just say the number of the answer. Let\'s begin. ',
-            'ANSWER_CORRECT_MESSAGE': 'correct. ',
-            'ANSWER_WRONG_MESSAGE': 'wrong. ',
-            'CORRECT_ANSWER_MESSAGE': 'The correct answer is %s: %s. ',
-            'ANSWER_IS_MESSAGE': 'That answer is ',
-            'TELL_QUESTION_MESSAGE': 'Question %s. %s ',
-            'GAME_OVER_MESSAGE': 'You got %s out of %s questions correct. Thank you for playing!',
-            'SCORE_IS_MESSAGE': 'Your score is %s. ',
-        },
-    },
-    'en-US': {
-        'translation': {
-            'QUESTIONS': questions['QUESTIONS_EN_US'],
-            'GAME_NAME': 'American Reindeer Trivia', // Be sure to change this for your skill.
-        },
-    },
-    'en-GB': {
-        'translation': {
-            'QUESTIONS': questions['QUESTIONS_EN_GB'],
-            'GAME_NAME': 'British Reindeer Trivia', // Be sure to change this for your skill.
-        },
-    },
     'de': {
         'translation': {
             'QUESTIONS': questions['QUESTIONS_DE_DE'],
-            'GAME_NAME': 'Wissenswertes über Rentiere in Deutsch', // Be sure to change this for your skill.
-            'HELP_MESSAGE': 'Ich stelle dir %s Multiple-Choice-Fragen. Antworte mit der Zahl, die zur richtigen Antwort gehört. ' +
-                'Sage beispielsweise eins, zwei, drei oder vier. Du kannst jederzeit ein neues Spiel beginnen, sage einfach „Spiel starten“. ',
+            'GAME_NAME': 'Finde den falschen Begriff', 
+            'HELP_MESSAGE': 'Ich nenne Dir eine Reihe von Begriffen und einer unterscheidet sich von allen anderen. Dabei geht es nicht um die Schreibweise. ' 
+            	+ 'nachdem Du eine Antwort ausgewählt hast, wird Dir die richtige Lösung mit Begründung verraten. ',
             'REPEAT_QUESTION_MESSAGE': 'Wenn die letzte Frage wiederholt werden soll, sage „Wiederholen“ ',
             'ASK_MESSAGE_START': 'Möchten Sie beginnen?',
             'HELP_REPROMPT': 'Wenn du eine Frage beantworten willst, antworte mit der Zahl, die zur richtigen Antwort gehört. ',
@@ -90,7 +51,7 @@ const languageString = {
             'ANSWER_WRONG_MESSAGE': 'Falsch. ',
             'CORRECT_ANSWER_MESSAGE': 'Die richtige Antwort ist %s: %s. ',
             'ANSWER_IS_MESSAGE': 'Diese Antwort ist ',
-            'TELL_QUESTION_MESSAGE': 'Frage %s. %s ',
+            'TELL_QUESTION_MESSAGE': 'Frage %s) %s ',
             'GAME_OVER_MESSAGE': 'Du hast %s von %s richtig beantwortet. Danke fürs Mitspielen!',
             'SCORE_IS_MESSAGE': 'Dein Ergebnis ist %s. ',
         },
@@ -219,10 +180,11 @@ function handleUserGuess(userGaveUp) {
         const spokenQuestion = Object.keys(translatedQuestions[gameQuestions[currentQuestionIndex]])[0];
         const roundAnswers = populateRoundAnswers.call(this, gameQuestions, currentQuestionIndex, correctAnswerIndex, translatedQuestions);
         const questionIndexForSpeech = currentQuestionIndex + 1;
+        logVariable("spokenQuestion", spokenQuestion);
         let repromptText = this.t('TELL_QUESTION_MESSAGE', questionIndexForSpeech.toString(), spokenQuestion);
 
         for (let i = 0; i < ANSWER_COUNT; i++) {
-            repromptText += `${i + 1}. ${roundAnswers[i]}. `;
+            repromptText += `${i + 1} - ${roundAnswers[i]}. `;
         }
 
         speechOutput += userGaveUp ? '' : this.t('ANSWER_IS_MESSAGE');
@@ -254,10 +216,11 @@ const startStateHandlers = Alexa.CreateStateHandler(GAME_STATES.START, {
         const roundAnswers = populateRoundAnswers(gameQuestions, 0, correctAnswerIndex, translatedQuestions);
         const currentQuestionIndex = 0;
         const spokenQuestion = Object.keys(translatedQuestions[gameQuestions[currentQuestionIndex]])[0];
+        logVariable("spokenQuestion2", spokenQuestion);
         let repromptText = this.t('TELL_QUESTION_MESSAGE', '1', spokenQuestion);
 
         for (let i = 0; i < ANSWER_COUNT; i++) {
-            repromptText += `${i + 1}. ${roundAnswers[i]}. `;
+            repromptText += `${i + 1} - ${roundAnswers[i]}. `;
         }
 
         speechOutput += repromptText;
@@ -362,6 +325,8 @@ const helpStateHandlers = Alexa.CreateStateHandler(GAME_STATES.HELP, {
 });
 
 exports.handler = function (event, context) {
+	logVariable("EVENT", event);
+	logVariable("CONTEXT", context);
     const alexa = Alexa.handler(event, context);
     alexa.appId = APP_ID;
     // To enable string internationalization (i18n) features, set a resources object.
@@ -369,3 +334,7 @@ exports.handler = function (event, context) {
     alexa.registerHandlers(newSessionHandlers, startStateHandlers, triviaStateHandlers, helpStateHandlers);
     alexa.execute();
 };
+
+function logVariable(prefix, variable) {
+	console.log(prefix + ": " + JSON.stringify(variable));
+}

@@ -9,7 +9,7 @@
 	</target>
 
 	<target name="zip">
-		<zip destfile="${project-name}.zip" basedir="${folder-to-zip}" includes="*.js" />
+		<zip destfile="${project-name}.zip" basedir="${folder-to-zip}" includes="**/*" />
 	</target>
 
 </project>
